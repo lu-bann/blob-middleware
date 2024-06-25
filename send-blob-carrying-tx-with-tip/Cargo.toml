@@ -1,0 +1,18 @@
+[package]
+name = "send-blob-carrying-tx-with-tip"
+version = "0.1.0"
+edition = "2021"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+alloy = { version = "0.1.2", features = [
+    "full",
+    "node-bindings",
+    "rpc-types-debug",
+    "rpc-types-trace",
+    "json-rpc",
+    "rpc-client",
+] }
+eyre = "0.6"
+tokio = { version = "1", features = ["full"] }
