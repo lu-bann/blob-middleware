@@ -10,18 +10,11 @@ contract BlobMiddleware {
     /**
      * @dev Emitted when a blob is submitted.
      * @param submitter The address of the submitter.
-     * @param blobCount The number of blobs included in the submission.
-     * @param tipPerBlob The tip provided per blob.
+     * @param blobTip The tip provided per blob.
      * @param blockBuilder The address of the block builder.
      * @param blobNumber The block number the blob is associated with.
      */
-    event BlobSubmitted(
-        address indexed submitter,
-        uint256 blobCount,
-        uint256 tipPerBlob,
-        address indexed blockBuilder,
-        uint256 blobNumber
-    );
+    event BlobSubmitted(address indexed submitter, uint256 blobTip, address indexed blockBuilder, uint256 blobNumber);
 
     /**
      * @dev Emitted when a block builder is added.
@@ -52,18 +45,15 @@ contract BlobMiddleware {
 
     /**
      * @notice Submits multiple blobs with a tip per blob for the block builder.
-     * @param tipPerBlob The tip provided per blob.
+     * @param blobTip The tip for blobs included in the blob carrying transaction that's calling this function.
      * @param blockNumber The block number the blob needs to be included in.
      * @param blockBuilder The address of the block builder who will include the blob.
      * @param deadline The deadline for including the blob.
      */
-    function submitBlob(uint256 tipPerBlob, uint256 blockNumber, address blockBuilder, uint256 deadline)
+    function submitBlob(uint256 blobTip, uint256 blockNumber, address blockBuilder, uint256 deadline)
         external
         payable
     {
-        uint256 blobCount = countBlobs();
-        uint256 blobTip = 0;
-        blobTip = blobCount * tipPerBlob;
         require(msg.value >= blobTip, "Insufficient blob tip");
 
         uint256 inclusionBlock = block.number;
@@ -74,28 +64,7 @@ contract BlobMiddleware {
         }
 
         blobTipLedger[blockBuilder] += blobTip;
-        emit BlobSubmitted(msg.sender, blobCount, tipPerBlob, blockBuilder, blockNumber);
-    }
-
-    /**
-     * @notice Counts the number of blobs included in the current blob carrying transaction.
-     * @return The number of blobs included in the current transaction.
-     */
-    function countBlobs() public view returns (uint256) {
-        uint256 blobCount = 0;
-        bytes32 _blobVersionedHash;
-
-        while (true) {
-            assembly {
-                _blobVersionedHash := blobhash(blobCount)
-            }
-            if (_blobVersionedHash == bytes32(0)) {
-                break;
-            }
-            blobCount++;
-        }
-
-        return blobCount;
+        emit BlobSubmitted(msg.sender, blobTip, blockBuilder, blockNumber);
     }
 
     /**
@@ -113,7 +82,7 @@ contract BlobMiddleware {
      * @notice Adds a block builder to the ledger.
      * @param blockBuilder The address of the block builder to add.
      */
-    function addBlockBuilder(address blockBuilder) onlyOwner external {
+    function addBlockBuilder(address blockBuilder) external onlyOwner {
         require(blobTipLedger[blockBuilder] == 0, "Block builder already exists");
         blobTipLedger[blockBuilder] = 0;
         emit BlockBuilderAdded(blockBuilder);

@@ -22,20 +22,16 @@ contract BlobMiddlewareTest is Test {
         hashes[2] = keccak256("blob3");
         vm.blobhashes(hashes);
 
-        uint256 blobCount = blobMiddleware.countBlobs();
-        assertEq(blobCount, vm.getBlobhashes().length, "Blob count mismatch");
-
-        uint256 tipPerBlob = 1 gwei;
+        uint256 blobTip = 1 gwei;
         uint256 blockNumber = block.number;
         uint256 deadline = 10;
-        uint256 totalTip = tipPerBlob * hashes.length;
         uint256 inclusionBlock = blockNumber + deadline;
 
         vm.roll(inclusionBlock);
         vm.prank(address(0x1));
-        vm.deal(address(0x1), totalTip);
-        blobMiddleware.submitBlob{value: totalTip}(tipPerBlob, blockNumber, blockBuilder, deadline);
+        vm.deal(address(0x1), blobTip);
+        blobMiddleware.submitBlob{value: blobTip}(blobTip, blockNumber, blockBuilder, deadline);
 
-        assertEq(blobMiddleware.blobTipLedger(blockBuilder), totalTip, "Blob tip ledger mismatch");
+        assertEq(blobMiddleware.blobTipLedger(blockBuilder), blobTip, "Blob tip ledger mismatch");
     }
 }
